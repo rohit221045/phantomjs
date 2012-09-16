@@ -45,7 +45,7 @@ SOURCES += phantom.cpp \
     repl.cpp \
     replcompletable.cpp
 
-OTHER_FILES += usage.txt \
+OTHER_FILES += \
     bootstrap.js \
     configurator.js \
     modules/fs.js \
@@ -56,6 +56,7 @@ OTHER_FILES += usage.txt \
 include(gif/gif.pri)
 include(mongoose/mongoose.pri)
 include(linenoise/linenoise.pri)
+include(qcommandline/qcommandline.pri)
 
 linux*|mac {
     INCLUDEPATH += breakpad/src
@@ -108,6 +109,10 @@ mac {
 
 win32-msvc* {
     LIBS += -lCrypt32
+    INCLUDEPATH += breakpad/src
+    SOURCES += breakpad/src/client/windows/handler/exception_handler.cc \
+      breakpad/src/client/windows/crash_generation/crash_generation_client.cc \
+      breakpad/src/common/windows/guid_string.cc
     CONFIG(static) {
         DEFINES += STATIC_BUILD
         QTPLUGIN += \
