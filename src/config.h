@@ -58,6 +58,7 @@ class Config: QObject
     Q_PROPERTY(bool javascriptCanOpenWindows READ javascriptCanOpenWindows WRITE setJavascriptCanOpenWindows)
     Q_PROPERTY(bool javascriptCanCloseWindows READ javascriptCanCloseWindows WRITE setJavascriptCanCloseWindows)
     Q_PROPERTY(QString sslProtocol READ sslProtocol WRITE setSslProtocol)
+    Q_PROPERTY(bool javascriptEnabled READ isJavascriptEnabled WRITE setJavascriptEnabled)
 
 public:
     Config(QObject *parent = 0);
@@ -152,6 +153,9 @@ public:
     void setSslProtocol(const QString& sslProtocolName);
     QString sslProtocol() const;
 
+    bool isJavascriptEnabled() const;
+    void setJavascriptEnabled(bool value);
+
 public slots:
     void handleSwitch(const QString &sw);
     void handleOption(const QString &option, const QVariant &value);
@@ -196,6 +200,7 @@ private:
     bool m_javascriptCanOpenWindows;
     bool m_javascriptCanCloseWindows;
     QString m_sslProtocol;
+    bool m_javascriptEnabled;
 };
 
 #endif // CONFIG_H

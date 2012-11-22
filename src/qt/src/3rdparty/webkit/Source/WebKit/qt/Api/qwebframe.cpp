@@ -613,8 +613,11 @@ void QWebFrame::addToJavaScriptWindowObject(const QString &name, QObject *object
 */
 void QWebFrame::addToJavaScriptWindowObject(const QString &name, QObject *object, QScriptEngine::ValueOwnership ownership)
 {
-    if (!page()->settings()->testAttribute(QWebSettings::JavascriptEnabled))
+    bool isJavascriptEnable = page()->settings()->testAttribute(QWebSettings::JavascriptEnabled);
+    bool isAppJavascriptEnable = page()->settings()->testAttribute(QWebSettings::AppJavascriptEnabled);
+    if (!isJavascriptEnable || !isAppJavascriptEnable)
         return;
+
 #if USE(JSC)
     JSC::JSLock lock(JSC::SilenceAssertionsOnly);
     JSDOMWindow* window = toJSDOMWindow(d->frame, mainThreadNormalWorld());
@@ -1553,8 +1556,12 @@ QVariant QWebFrame::evaluateJavaScript(const QString& scriptSource, const QStrin
     if (proxy) {
 #if USE(JSC)
         int distance = 0;
-        JSC::JSValue v = d->frame->script()->executeScript(ScriptSourceCode(scriptSource, WTF::String(location))).jsValue();
-
+        JSC::JSValue v;
+        if (page()->settings()->testAttribute(QWebSettings::AppJavascriptEnabled)) {
+            v = d->frame->script()->evaluate(ScriptSourceCode(scriptSource, WTF::String(location))).jsValue();
+        } else {
+            v = d->frame->script()->executeScript(ScriptSourceCode(scriptSource, WTF::String(location))).jsValue();
+        }
         rc = JSC::Bindings::convertValueToQVariant(proxy->globalObject(mainThreadNormalWorld())->globalExec(), v, QMetaType::Void, &distance);
 #elif USE(V8)
         QScriptEngine* engine = d->frame->script()->qtScriptEngine();

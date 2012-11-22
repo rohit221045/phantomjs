@@ -78,7 +78,8 @@ public:
         JavascriptCanCloseWindows,
         WebGLEnabled,
         HyperlinkAuditingEnabled,
-        WebSecurityEnabled
+        WebSecurityEnabled,
+        AppJavascriptEnabled
     };
     enum WebGraphic {
         MissingImageGraphic,

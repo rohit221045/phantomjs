@@ -63,6 +63,7 @@ static const struct QCommandLineConfigEntry flags[] =
     { QCommandLine::Option, '\0', "script-encoding", "Sets the encoding used for the starting script, default is 'utf8'", QCommandLine::Optional },
     { QCommandLine::Option, '\0', "web-security", "Enables web security, 'yes' (default) or 'no'", QCommandLine::Optional },
     { QCommandLine::Option, '\0', "ssl-protocol", "Sets the SSL protocol (supported protocols: 'SSLv3' (default), 'SSLv2', 'TLSv1', 'any')", QCommandLine::Optional },
+    { QCommandLine::Option, '\0', "disable-javascript", "Disables javascript on web page: 'yes' or 'no' (default)", QCommandLine::Optional }, 
     { QCommandLine::Param, '\0', "script", "Script", QCommandLine::Flags(QCommandLine::Optional|QCommandLine::ParameterFence)},
     { QCommandLine::Param, '\0', "argument", "Script argument", QCommandLine::OptionalMultiple },
     { QCommandLine::Switch, 'h', "help", "Shows this message and quits", QCommandLine::Optional },
@@ -623,4 +624,13 @@ QString Config::sslProtocol() const
 void Config::setSslProtocol(const QString& sslProtocolName)
 {
     m_sslProtocol = sslProtocolName.toLower();
+}
+
+bool Config::isJavascriptEnabled() const
+{
+    return m_javascriptEnabled;
+}
+void Config::setJavascriptEnabled(bool value)
+{
+    m_javascriptEnabled = value;
 }

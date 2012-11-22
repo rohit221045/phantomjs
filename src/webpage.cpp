@@ -358,6 +358,7 @@ WebPage::WebPage(QObject *parent, const QUrl &baseUrl)
 
     m_customWebPage->settings()->setAttribute(QWebSettings::LocalStorageEnabled, true);
     m_customWebPage->settings()->setLocalStoragePath(QDesktopServices::storageLocation(QDesktopServices::DataLocation));
+    m_customWebPage->settings()->setAttribute(QWebSettings::AppJavascriptEnabled, phantomCfg->isJavascriptEnabled());
 
     // Custom network access manager to allow traffic monitoring.
     m_networkAccessManager = new NetworkAccessManager(this, phantomCfg);
