@@ -48,16 +48,18 @@
 #include "system.h"
 #include "callback.h"
 #include "cookiejar.h"
+#include "childprocess.h"
 
 static Phantom *phantomInstance = NULL;
 
 // private:
 Phantom::Phantom(QObject *parent)
-    : REPLCompletable(parent)
+    : QObject(parent)
     , m_terminated(false)
     , m_returnValue(0)
     , m_filesystem(0)
     , m_system(0)
+    , m_childprocess(0)
 {
     QStringList args = QApplication::arguments();
 
@@ -341,6 +343,15 @@ QObject *Phantom::createSystem()
     return m_system;
 }
 
+QObject *Phantom::_createChildProcess()
+{
+    if (!m_childprocess) {
+        m_childprocess = new ChildProcess(this);
+    }
+
+    return m_childprocess;
+}
+
 QObject* Phantom::createCallback()
 {
     return new Callback(this);
@@ -459,25 +470,4 @@ void Phantom::doExit(int code)
     m_pages.clear();
     m_page = 0;
     QApplication::instance()->exit(code);
-}
-
-void Phantom::initCompletions()
-{
-    // Add completion for the Dynamic Properties of the 'phantom' object
-    // properties
-    addCompletion("args");
-    addCompletion("defaultPageSettings");
-    addCompletion("libraryPath");
-    addCompletion("outputEncoding");
-    addCompletion("scriptName");
-    addCompletion("version");
-    addCompletion("cookiesEnabled");
-    addCompletion("cookies");
-    // functions
-    addCompletion("exit");
-    addCompletion("debugExit");
-    addCompletion("injectJs");
-    addCompletion("addCookie");
-    addCompletion("deleteCookie");
-    addCompletion("clearCookies");
 }
