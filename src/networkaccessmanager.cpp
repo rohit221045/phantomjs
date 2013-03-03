@@ -35,6 +35,7 @@
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QSslSocket>
+#include <QNetworkConfigurationManager>
 
 #include "phantom.h"
 #include "config.h"
@@ -80,7 +81,6 @@ void JsNetworkRequest::abort()
     }
 }
 
-
 void JsNetworkRequest::changeUrl(const QString& url)
 {
     if (m_networkRequest) {
@@ -125,6 +125,22 @@ NetworkAccessManager::NetworkAccessManager(QObject *parent, const Config *config
         } else if (config->sslProtocol() == "any") {
             m_sslConfiguration.setProtocol(QSsl::AnyProtocol);
         }
+    }
+
+    if (!config->networkInterface().isEmpty()) {
+       QString networkInterfaceName = config->networkInterface();
+
+       QNetworkConfigurationManager *networkMgr = new QNetworkConfigurationManager();
+       QList<QNetworkConfiguration> allConfig = networkMgr->allConfigurations();
+
+       Q_FOREACH(QNetworkConfiguration networkConfiguration, allConfig) {
+           if (networkConfiguration.name().toLower() == networkInterfaceName) {
+               qDebug() << "NETWORK - Using " << networkConfiguration.name();
+               setConfiguration(networkConfiguration);
+           }
+       }
+
+       networkMgr->deleteLater();
     }
 
     connect(this, SIGNAL(authenticationRequired(QNetworkReply*,QAuthenticator*)), SLOT(provideAuthentication(QNetworkReply*,QAuthenticator*)));

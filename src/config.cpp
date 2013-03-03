@@ -66,6 +66,7 @@ static const struct QCommandLineConfigEntry flags[] =
     { QCommandLine::Option, '\0', "ssl-protocol", "Sets the SSL protocol (supported protocols: 'SSLv3' (default), 'SSLv2', 'TLSv1', 'any')", QCommandLine::Optional },
     { QCommandLine::Option, '\0', "webdriver", "Starts in 'Remote WebDriver mode' (embedded GhostDriver): '[[<IP>:]<PORT>]' (default '127.0.0.1:8910') ", QCommandLine::Optional },
     { QCommandLine::Option, '\0', "webdriver-selenium-grid-hub", "URL to the Selenium Grid HUB: 'URL_TO_HUB' (default 'none') (NOTE: works only together with '--webdriver') ", QCommandLine::Optional },
+    { QCommandLine::Option, '\0', "network-interface", "Specifies the network inteface to use for all network requests", QCommandLine::Optional },
     { QCommandLine::Param, '\0', "script", "Script", QCommandLine::Flags(QCommandLine::Optional|QCommandLine::ParameterFence)},
     { QCommandLine::Param, '\0', "argument", "Script argument", QCommandLine::OptionalMultiple },
     { QCommandLine::Switch, 'h', "help", "Shows this message and quits", QCommandLine::Optional },
@@ -665,6 +666,9 @@ void Config::handleOption(const QString &option, const QVariant &value)
     if (option == "webdriver-selenium-grid-hub") {
         setWebdriverSeleniumGridHub(value.toString());
     }
+    if (option == "network-interface") {
+        setNetworkInterface(value.toString());
+    }
 }
 
 void Config::handleParam(const QString& param, const QVariant &value)
@@ -690,4 +694,14 @@ QString Config::sslProtocol() const
 void Config::setSslProtocol(const QString& sslProtocolName)
 {
     m_sslProtocol = sslProtocolName.toLower();
+}
+
+void Config::setNetworkInterface(const QString& networkInterface)
+{
+    m_networkInterface = networkInterface.toLower();
+}
+
+QString Config::networkInterface() const
+{
+    return m_networkInterface;
 }

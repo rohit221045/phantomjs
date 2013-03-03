@@ -60,6 +60,7 @@ class Config: public QObject
     Q_PROPERTY(QString sslProtocol READ sslProtocol WRITE setSslProtocol)
     Q_PROPERTY(QString webdriver READ webdriver WRITE setWebdriver)
     Q_PROPERTY(QString webdriverSeleniumGridHub READ webdriverSeleniumGridHub WRITE setWebdriverSeleniumGridHub)
+    Q_PROPERTY(QString networkInterface READ networkInterface WRITE setNetworkInterface)
 
 public:
     Config(QObject *parent = 0);
@@ -161,6 +162,9 @@ public:
     void setWebdriverSeleniumGridHub(const QString& hubUrl);
     QString webdriverSeleniumGridHub() const;
 
+    void setNetworkInterface(const QString& networkInterface);
+    QString networkInterface() const;
+
 public slots:
     void handleSwitch(const QString &sw);
     void handleOption(const QString &option, const QVariant &value);
@@ -207,6 +211,7 @@ private:
     QString m_sslProtocol;
     QString m_webdriver;
     QString m_webdriverSeleniumGridHub;
+    QString m_networkInterface;
 };
 
 #endif // CONFIG_H

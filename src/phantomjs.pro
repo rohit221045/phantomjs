@@ -122,6 +122,7 @@ win32-msvc* {
             qjpcodecs \
             qkrcodecs \
             qtwcodecs \
-            qico
+            qico \
+            qgenericbearer
     }
 }
