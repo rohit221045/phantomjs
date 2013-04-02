@@ -3569,7 +3569,6 @@ bool QWebPage::extension(Extension extension, const ExtensionOption *option, Ext
         return true;
     }
 #endif
-
     return false;
 }
 

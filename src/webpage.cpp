@@ -105,20 +105,17 @@ public:
         if (extension == ChooseMultipleFilesExtension) {
             static_cast<ChooseMultipleFilesExtensionReturn*>(output)->fileNames = m_uploadFiles;
             return true;
+        } else if (extension == ShouldInterruptJavaScript) {
+            bool shouldInterruptJs = shouldInterruptJavaScript();
+            return static_cast<ShouldInterruptJavaScriptReturn*>(output)->interrupt = shouldInterruptJs;
         } else {
             return false;
         }
     }
 
-public slots:
-    bool shouldInterruptJavaScript() {
-        QApplication::processEvents(QEventLoop::AllEvents, 42);
-        return false;
-    }
-
 protected:
     bool supportsExtension(Extension extension) const {
-        return extension == ChooseMultipleFilesExtension;
+        return extension == ChooseMultipleFilesExtension || ShouldInterruptJavaScript;
     }
 
     QString chooseFile(QWebFrame *originatingFrame, const QString &oldFile) {
@@ -134,6 +131,12 @@ protected:
         // Return the value coming from the "filePicker" callback, IFF not null.
         qDebug() << "CustomPage - file chosen for upload:" << chosenFile;
         return chosenFile;
+    }
+
+    bool shouldInterruptJavaScript() {
+        bool shouldInterrupt = m_webPage->javascriptInterrupt();
+        //QApplication::processEvents(QEventLoop::AllEvents, 42);
+        return shouldInterrupt;
     }
 
     void javaScriptAlert(QWebFrame *originatingFrame, const QString &msg) {
@@ -251,6 +254,7 @@ public:
         , m_filePickerCallback(NULL)
         , m_jsConfirmCallback(NULL)
         , m_jsPromptCallback(NULL)
+        , m_jsInterruptCallback(NULL)
     {
     }
 
@@ -290,6 +294,17 @@ public:
         return m_jsPromptCallback;
     }
 
+    QObject *getJsInterruptCallback() {
+        qDebug() << "WebpageCallbacks - getJsInterruptCallback";
+
+        //Q_CHECK_PTR(m_jsInterruptCallback);
+
+        if (!m_jsInterruptCallback) {
+            m_jsInterruptCallback = new Callback(this);
+        }
+        return m_jsInterruptCallback;
+    }
+
 public slots:
     QVariant call(const QVariantList &arguments) {
         if (m_genericCallback) {
@@ -303,6 +318,7 @@ private:
     Callback *m_filePickerCallback;
     Callback *m_jsConfirmCallback;
     Callback *m_jsPromptCallback;
+    Callback *m_jsInterruptCallback;
 
     friend class WebPage;
 };
@@ -704,6 +720,19 @@ QString WebPage::filePicker(const QString &oldFile)
         }
     }
     return QString::null;
+}
+
+bool WebPage::javascriptInterrupt()
+{
+    if (m_callbacks->m_jsInterruptCallback) {
+        QVariant res = m_callbacks->m_jsInterruptCallback->call(QVariantList());
+
+        if (res.canConvert<bool>()) {
+            return res.toBool();
+        }
+    }
+
+    return false;
 }
 
 bool WebPage::javaScriptConfirm(const QString &msg)
@@ -1291,6 +1320,15 @@ QObject *WebPage::_getJsPromptCallback()
     }
 
     return m_callbacks->getJsPromptCallback();
+}
+
+QObject *WebPage::_getJsInterruptCallback()
+{
+    if (!m_callbacks) {
+        m_callbacks = new WebpageCallbacks(this);
+    }
+
+    return m_callbacks->getJsInterruptCallback();
 }
 
 void WebPage::sendEvent(const QString &type, const QVariant &arg1, const QVariant &arg2, const QString &mouseButton, const QVariant &modifierArg)
