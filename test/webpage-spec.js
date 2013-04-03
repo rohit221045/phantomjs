@@ -1207,6 +1207,18 @@ describe("WebPage object", function() {
             expect(handled).toBe(true);
         });
     });
+
+    it("should interrupt a long-running JavaScript code", function() {
+        var page = new WebPage();
+        
+        page.onShouldInterruptJs = function() {
+            return true;
+        };
+        
+        page.open('../test/webpage-spec-frames/forever.html', function(status) {
+            expect(status).toEqual('success');
+        });
+    });
 });
 
 describe("WebPage construction with options", function () {
