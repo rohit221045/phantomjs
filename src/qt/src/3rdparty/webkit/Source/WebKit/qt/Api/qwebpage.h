@@ -321,8 +321,7 @@ public:
 
     enum Extension {
         ChooseMultipleFilesExtension,
-        ErrorPageExtension,
-        ShouldInterruptJavaScript
+        ErrorPageExtension
     };
     class ExtensionOption
     {};
@@ -338,16 +337,6 @@ public:
     class ChooseMultipleFilesExtensionReturn : public ExtensionReturn {
     public:
         QStringList fileNames;
-    };
-
-    class ShouldInterruptJavaScriptOption : public ExtensionOption {
-    public:
-        QWebFrame *parentFrame;
-    };
-
-    class ShouldInterruptJavaScriptReturn : public ExtensionReturn {
-    public:
-        bool interrupt;
     };
 
     enum ErrorDomain { QtNetwork, Http, WebKit };
@@ -374,6 +363,9 @@ public:
     virtual bool supportsExtension(Extension extension) const;
 
     inline QWebPagePrivate* handle() const { return d; }
+
+public Q_SLOTS:
+    bool shouldInterruptJavaScript();
 
 Q_SIGNALS:
     void loadStarted();
@@ -422,7 +414,6 @@ protected:
     virtual bool javaScriptPrompt(QWebFrame *originatingFrame, const QString& msg, const QString& defaultValue, QString* result);
     virtual void javaScriptConsoleMessage(const QString& message, int lineNumber, const QString& sourceID);
     virtual void javaScriptError(const QString& message, int lineNumber, const QString& sourceID, const QString& stack);
-    virtual bool shouldInterruptJavaScript();
 
     virtual QString userAgentForUrl(const QUrl& url) const;
 

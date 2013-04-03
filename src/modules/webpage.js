@@ -468,9 +468,6 @@ function decorateNewPage(opts, page) {
     // @see https://developer.mozilla.org/en/DOM/window.prompt
     definePageCallbackHandler(page, handlers, "onPrompt", "_getJsPromptCallback");
 
-    // Calls from within the page when some javascript code running to long
-    definePageCallbackHandler(page, handlers, "onShouldInterruptJs", "_getJsInterruptCallback");
-
     page.event = {};
     page.event.modifier = {
         shift:  0x02000000,

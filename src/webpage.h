@@ -258,7 +258,6 @@ public slots:
     QObject *_getFilePickerCallback();
     QObject *_getJsConfirmCallback();
     QObject *_getJsPromptCallback();
-    QObject *_getJsInterruptCallback();
     void _uploadFile(const QString &selector, const QStringList &fileNames);
     void sendEvent(const QString &type, const QVariant &arg1 = QVariant(), const QVariant &arg2 = QVariant(), const QString &mouseButton = QString(), const QVariant &modifierArg = QVariant());
 
@@ -496,7 +495,6 @@ private:
     void changeCurrentFrame(QWebFrame * const frame);
 
     QString filePicker(const QString &oldFile);
-    bool javascriptInterrupt();
     bool javaScriptConfirm(const QString &msg);
     bool javaScriptPrompt(const QString &msg, const QString &defaultValue, QString *result);
 
