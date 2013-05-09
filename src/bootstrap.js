@@ -216,7 +216,7 @@ phantom.callback = function(callback) {
 
         if (request[0] === '.') {
             paths.push(fs.absolute(joinPath(phantom.webdriverMode ? ":/ghostdriver" : this.dirname, request)));
-        } else if (request[0] === '/') {
+        } else if (fs.isAbsolute(request)) {
             paths.push(fs.absolute(request));
         } else {
             // first look in PhantomJS modules
@@ -276,6 +276,9 @@ phantom.callback = function(callback) {
 
         // first see if there are any stubs for the request
         if (this.stubs.hasOwnProperty(request)) {
+            if (this.stubs[request].exports instanceof Function) {
+                this.stubs[request].exports = this.stubs[request].exports();
+            }
             return this.stubs[request].exports;
         }
 

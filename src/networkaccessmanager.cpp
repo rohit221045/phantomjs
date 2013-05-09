@@ -35,6 +35,9 @@
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QSslSocket>
+#include <QSslCertificate>
+#include <QRegExp>
+#include <limits>
 
 #include "phantom.h"
 #include "config.h"
@@ -67,18 +70,30 @@ static const char *toString(QNetworkAccessManager::Operation op)
     return str;
 }
 
-JsNetworkRequest::JsNetworkRequest(QNetworkReply* reply)
+TimeoutTimer::TimeoutTimer(QObject* parent)
+    : QTimer(parent)
 {
-    setParent(reply);
-
-    m_networkReply = reply;
 }
 
 
+JsNetworkRequest::JsNetworkRequest(QNetworkRequest* request, QObject* parent)
+    : QObject(parent)
+{
+    m_networkRequest = request;
+}
+
 void JsNetworkRequest::abort()
 {
-    if (m_networkReply->isRunning() || !m_networkReply->isFinished()) {
-        m_networkReply->abort();
+    if (m_networkRequest) {
+        m_networkRequest->setUrl(QUrl());
+    }
+}
+
+
+void JsNetworkRequest::changeUrl(const QString& url)
+{
+    if (m_networkRequest) {
+        m_networkRequest->setUrl(QUrl(url));
     }
 }
 
@@ -91,6 +106,7 @@ NetworkAccessManager::NetworkAccessManager(QObject *parent, const Config *config
     , m_idCounter(0)
     , m_networkDiskCache(0)
     , m_sslConfiguration(QSslConfiguration::defaultConfiguration())
+    , m_resourceTimeout(0)
 {
     setCookieJar(CookieJar::instance());
 
@@ -105,6 +121,10 @@ NetworkAccessManager::NetworkAccessManager(QObject *parent, const Config *config
     if (QSslSocket::supportsSsl()) {
         m_sslConfiguration = QSslConfiguration::defaultConfiguration();
 
+        if (config->ignoreSslErrors()) {
+            m_sslConfiguration.setPeerVerifyMode(QSslSocket::VerifyNone);
+        }
+
         // set the SSL protocol to SSLv3 by the default
         m_sslConfiguration.setProtocol(QSsl::SslV3);
 
@@ -114,6 +134,13 @@ NetworkAccessManager::NetworkAccessManager(QObject *parent, const Config *config
             m_sslConfiguration.setProtocol(QSsl::TlsV1);
         } else if (config->sslProtocol() == "any") {
             m_sslConfiguration.setProtocol(QSsl::AnyProtocol);
+        }
+
+        if (!config->sslCertificatesPath().isEmpty()) {
+          QList<QSslCertificate> caCerts = QSslCertificate::fromPath(
+              config->sslCertificatesPath(), QSsl::Pem, QRegExp::Wildcard);
+
+            m_sslConfiguration.setCaCertificates(caCerts);
         }
     }
 
@@ -129,6 +156,11 @@ void NetworkAccessManager::setUserName(const QString &userName)
 void NetworkAccessManager::setPassword(const QString &password)
 {
     m_password = password;
+}
+
+void NetworkAccessManager::setResourceTimeout(int resourceTimeout)
+{
+    m_resourceTimeout = resourceTimeout;
 }
 
 void NetworkAccessManager::setMaxAuthAttempts(int maxAttempts)
@@ -171,9 +203,11 @@ QNetworkReply *NetworkAccessManager::createRequest(Operation op, const QNetworkR
     // Get the URL string before calling the superclass. Seems to work around
     // segfaults in Qt 4.8: https://gist.github.com/1430393
     QByteArray url = req.url().toEncoded();
+    QByteArray postData;
 
     // http://code.google.com/p/phantomjs/issues/detail?id=337
     if (op == QNetworkAccessManager::PostOperation) {
+        if (outgoingData) postData = outgoingData->peek((std::numeric_limits<qint64>::max)());
         QString contentType = req.header(QNetworkRequest::ContentTypeHeader).toString();
         if (contentType.isEmpty()) {
             req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
@@ -187,8 +221,7 @@ QNetworkReply *NetworkAccessManager::createRequest(Operation op, const QNetworkR
         ++i;
     }
 
-    // Pass duty to the superclass - Nothing special to do here (yet?)
-    QNetworkReply *reply = QNetworkAccessManager::createRequest(op, req, outgoingData);
+    m_idCounter++;
 
     QVariantList headers;
     foreach (QByteArray headerName, req.rawHeaderList()) {
@@ -198,21 +231,59 @@ QNetworkReply *NetworkAccessManager::createRequest(Operation op, const QNetworkR
         headers += header;
     }
 
-    m_idCounter++;
-    m_ids[reply] = m_idCounter;
-
     QVariantMap data;
     data["id"] = m_idCounter;
     data["url"] = url.data();
     data["method"] = toString(op);
     data["headers"] = headers;
+    if (op == QNetworkAccessManager::PostOperation) data["postData"] = postData.data();
     data["time"] = QDateTime::currentDateTime();
-    
+
+    JsNetworkRequest jsNetworkRequest(&req, this);
+    emit resourceRequested(data, &jsNetworkRequest);
+
+    // Pass duty to the superclass - Nothing special to do here (yet?)
+    QNetworkReply *reply = QNetworkAccessManager::createRequest(op, req, outgoingData);
+
+    // reparent jsNetworkRequest to make sure that it will be destroyed with QNetworkReply
+    jsNetworkRequest.setParent(reply);
+
+    // If there is a timeout set, create a TimeoutTimer
+    if(m_resourceTimeout > 0){
+
+        TimeoutTimer *nt = new TimeoutTimer(reply);
+        nt->reply = reply; // We need the reply object in order to abort it later on.
+        nt->data = data;
+        nt->setInterval(m_resourceTimeout);
+        nt->setSingleShot(true);
+        nt->start();
+
+        connect(nt, SIGNAL(timeout()), this, SLOT(handleTimeout()));
+    }
+
+    m_ids[reply] = m_idCounter;
+
     connect(reply, SIGNAL(readyRead()), this, SLOT(handleStarted()));
     connect(reply, SIGNAL(sslErrors(const QList<QSslError> &)), this, SLOT(handleSslErrors(const QList<QSslError> &)));
     connect(reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(handleNetworkError()));
 
     return reply;
+}
+
+void NetworkAccessManager::handleTimeout()
+{
+    TimeoutTimer *nt = qobject_cast<TimeoutTimer*>(sender());
+
+    if(!nt->reply)
+        return;
+
+    nt->data["errorCode"] = 408;
+    nt->data["errorString"] = "Network timeout on resource.";
+
+    emit resourceTimeout(nt->data);
+
+    // Abort the reply that we attached to the Network Timeout
+    nt->reply->abort();
 }
 
 void NetworkAccessManager::handleStarted()
@@ -245,8 +316,7 @@ void NetworkAccessManager::handleStarted()
     data["headers"] = headers;
     data["time"] = QDateTime::currentDateTime();
 
-    JsNetworkRequest* jsNetworkRequest = new JsNetworkRequest(reply);
-    emit resourceRequested(data, jsNetworkRequest);
+    emit resourceReceived(data);
 }
 
 void NetworkAccessManager::handleFinished(QNetworkReply *reply)
@@ -300,6 +370,8 @@ void NetworkAccessManager::handleFinished(QNetworkReply *reply, const QVariant &
     m_started.remove(reply);
 
     emit resourceReceived(data);
+
+    reply->deleteLater();
 }
 
 void NetworkAccessManager::handleSslErrors(const QList<QSslError> &errors)
@@ -321,17 +393,11 @@ void NetworkAccessManager::handleNetworkError()
              << "(" << reply->errorString() << ")"
              << "URL:" << reply->url().toString();
 
-    m_ids.remove(reply);
-
-    if (m_started.contains(reply))
-        m_started.remove(reply);
-
     QVariantMap data;
+    data["id"] = m_ids.value(reply);
     data["url"] = reply->url().toString();
     data["errorCode"] = reply->error();
     data["errorString"] = reply->errorString();
 
     emit resourceError(data);
-
-    reply->deleteLater();
 }
