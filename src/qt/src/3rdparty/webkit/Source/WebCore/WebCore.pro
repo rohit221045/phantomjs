@@ -1018,6 +1018,7 @@ SOURCES += \
     platform/LinkHash.cpp \
     platform/Logging.cpp \
     platform/MIMETypeRegistry.cpp \
+    platform/qt/MemoryUsageSupportQt.cpp \
     platform/mock/DeviceOrientationClientMock.cpp \
     platform/mock/GeolocationClientMock.cpp \
     platform/mock/GeolocationServiceMock.cpp \
@@ -1991,6 +1992,7 @@ HEADERS += \
     platform/Logging.h \
     platform/Language.h \
     platform/MIMETypeRegistry.h \
+    platform/MemoryUsageSupport.h \
     platform/network/AuthenticationChallengeBase.h \
     platform/network/AuthenticationClient.h \
     platform/network/BlobData.h \
