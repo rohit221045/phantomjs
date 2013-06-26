@@ -898,6 +898,26 @@ function decorateNewPage(opts, page) {
         'yen': 165
     };
 
+    page.action = {
+        'OpenLink' : 0,
+        'OpenLinkInNewWindow' : 1,
+        'OpenFrameInNewWindow' : 2,
+        'DownloadLinkToDisk' : 3,
+        'CopyLinkToClipboard' : 4,
+        'OpenImageInNewWindow' : 5,
+        'DownloadImageToDisk' : 6,
+        'CopyImageToClipboard' : 7,
+        'Back' : 8,
+        'Forward' : 9,
+        'Stop' : 10,
+        'Reload' : 11,
+        'Cut' : 12,
+        'Copy' : 13,
+        'Paste' : 14,
+        'SelectAll' : 52,
+        'ReloadAndBypassCache' : 53
+    };
+
     return page;
 }
 

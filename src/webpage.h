@@ -459,6 +459,8 @@ public slots:
      */
     void stop();
 
+    void dispatchAction(int action);
+
 signals:
     void initialized();
     void loadStarted();

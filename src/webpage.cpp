@@ -1580,4 +1580,10 @@ void WebPage::updateLoadingProgress(int progress)
     m_loadingProgress = progress;
 }
 
+void WebPage::dispatchAction(int action)
+{
+    QWebPage::WebAction actionToDispatch = static_cast<QWebPage::WebAction>(action);
+    m_customWebPage->triggerAction(actionToDispatch);
+}
+
 #include "webpage.moc"
