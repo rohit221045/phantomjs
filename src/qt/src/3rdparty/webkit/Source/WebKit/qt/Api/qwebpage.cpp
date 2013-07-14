@@ -2100,6 +2100,15 @@ void QWebPage::javaScriptConsoleMessage(const QString& message, int lineNumber, 
     }
 }
 
+/* Subclasses should reimplement this to add error handling. */
+void QWebPage::javaScriptError(const QString& message, int lineNumber, const QString& sourceID, const QString& stack)
+{
+    Q_UNUSED(message);
+    Q_UNUSED(lineNumber);
+    Q_UNUSED(sourceID);
+    Q_UNUSED(stack);
+}
+
 /*!
     This function is called whenever a JavaScript program running inside \a frame calls the alert() function with
     the message \a msg.
@@ -3800,7 +3809,7 @@ QString QWebPage::userAgentForUrl(const QUrl&) const
 #elif defined Q_OS_WIN32
         firstPartTemp += windowsVersionForUAString();
 #elif defined Q_OS_DARWIN
-#if CPU(X86) || CPU(X86_64)
+#ifdef __i386__ || __x86_64__
         firstPartTemp += QString::fromLatin1("Intel Mac OS X");
 #else
         firstPartTemp += QString::fromLatin1("PPC Mac OS X");

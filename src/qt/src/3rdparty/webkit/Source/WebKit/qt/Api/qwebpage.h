@@ -244,7 +244,6 @@ public:
         friend class QWebPage;
     };
 
-
     explicit QWebPage(QObject *parent = 0);
     ~QWebPage();
 
@@ -414,6 +413,7 @@ protected:
     virtual bool javaScriptConfirm(QWebFrame *originatingFrame, const QString& msg);
     virtual bool javaScriptPrompt(QWebFrame *originatingFrame, const QString& msg, const QString& defaultValue, QString* result);
     virtual void javaScriptConsoleMessage(const QString& message, int lineNumber, const QString& sourceID);
+    virtual void javaScriptError(const QString& message, int lineNumber, const QString& sourceID, const QString& stack);
 
     virtual QString userAgentForUrl(const QUrl& url) const;
 

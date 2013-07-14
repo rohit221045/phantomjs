@@ -22,6 +22,9 @@
 #include "config.h"
 #include "qwebview.h"
 
+#include <wtf/OwnPtr.h>
+#include <wtf/PassOwnPtr.h>
+
 #include "Page.h"
 #include "QWebPageClient.h"
 #include "Settings.h"
@@ -223,6 +226,10 @@ protected:
     QWebView is the main widget component of the QtWebKit web browsing module.
     It can be used in various applications to display web content live from the
     Internet.
+
+    The image below shows QWebView previewed in \QD with a Nokia website.
+
+    \image qwebview-url.png
 
     A web site can be loaded onto QWebView with the load() function. Like all
     Qt widgets, the show() function must be invoked in order to display

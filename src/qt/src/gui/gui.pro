@@ -41,7 +41,6 @@ include(statemachine/statemachine.pri)
 include(math3d/math3d.pri)
 include(effects/effects.pri)
 
-include(egl/egl.pri)
 win32:!wince*: DEFINES += QT_NO_EGL
 embedded: QT += network
 
@@ -80,7 +79,7 @@ win32:!contains(QT_CONFIG, directwrite) {
     DEFINES += QT_NO_DIRECTWRITE
 }
 
-mac:contains(QMAKE_MAC_XARCH, no) {
+contains(QMAKE_MAC_XARCH, no) {
     DEFINES += QT_NO_MAC_XARCH
 } else {
     win32-g++*|!win32:!win32-icc*:!macx-icc* {
