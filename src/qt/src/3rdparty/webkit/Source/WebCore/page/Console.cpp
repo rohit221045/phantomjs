@@ -140,7 +140,7 @@ void Console::addMessage(MessageSource source, MessageType type, MessageLevel le
     if (!page)
         return;
 
-    page->chrome()->client()->addMessageToConsole(source, type, level, message, lineNumber, sourceURL, callStack);
+    page->chrome()->client()->addMessageToConsole(source, type, level, message, lineNumber, sourceURL);
 
     if (callStack)
         InspectorInstrumentation::addMessageToConsole(page, source, type, level, message, 0, callStack);
@@ -183,12 +183,8 @@ void Console::addMessage(MessageType type, MessageLevel level, PassRefPtr<Script
     }
 
     String message;
-    for (unsigned i = 0; i < arguments->argumentCount(); ++i) {
-        message.append(arguments->argumentAt(i).toString(arguments->globalState()));
-        if (i < arguments->argumentCount() - 1)
-            message.append(' ');
-    }
-    page->chrome()->client()->addMessageToConsole(JSMessageSource, type, level, message, lastCaller.lineNumber(), lastCaller.sourceURL(), prpCallStack);
+    if (arguments->getFirstArgumentAsString(message))
+        page->chrome()->client()->addMessageToConsole(JSMessageSource, type, level, message, lastCaller.lineNumber(), lastCaller.sourceURL());
 
     InspectorInstrumentation::addMessageToConsole(page, JSMessageSource, type, level, message, arguments, callStack);
 }

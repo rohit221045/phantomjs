@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2012 Digia Plc and/or its subsidiary(-ies).
+** Copyright (C) 2013 Digia Plc and/or its subsidiary(-ies).
 ** Contact: http://www.qt-project.org/legal
 **
 ** This file is part of the plugins of the Qt Toolkit.
@@ -47,8 +47,6 @@
 
 QT_BEGIN_NAMESPACE
 
-class QPlatformFontDatabase;
-
 class QMinimalScreen : public QPlatformScreen
 {
 public:
@@ -58,7 +56,6 @@ public:
     QRect geometry() const { return mGeometry; }
     int depth() const { return mDepth; }
     QImage::Format format() const { return mFormat; }
-    QSize physicalSize() const;
 
 public:
     QRect mGeometry;
@@ -77,14 +74,11 @@ public:
     QPixmapData *createPixmapData(QPixmapData::PixelType type) const;
     QPlatformWindow *createPlatformWindow(QWidget *widget, WId winId) const;
     QWindowSurface *createWindowSurface(QWidget *widget, WId winId) const;
-    
-    QPlatformFontDatabase *fontDatabase() const;
 
     QList<QPlatformScreen *> screens() const { return mScreens; }
 
 private:
     QList<QPlatformScreen *> mScreens;
-    QPlatformFontDatabase *mFontDb;
 };
 
 QT_END_NAMESPACE

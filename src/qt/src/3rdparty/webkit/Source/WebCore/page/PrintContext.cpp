@@ -82,16 +82,9 @@ void PrintContext::computePageRects(const FloatRect& printRect, float headerHeig
     float pageWidth;
     float pageHeight;
     if (isHorizontal) {
+        float ratio = printRect.height() / printRect.width();
         pageWidth = view->docWidth();
-        ///NOTE: if we do not reuse the previously set logical page height,
-        ///      we can end up with off-by-one erros in the page height, 
-        ///      leading to rendering issues (e.g. rows overlap pagebreaks)
-        if (view->pageLogicalHeight() == 0) {
-            float ratio = printRect.height() / printRect.width();
-            pageHeight = floorf(pageWidth * ratio);
-        } else {
-            pageHeight = view->pageLogicalHeight();
-        }
+        pageHeight = floorf(pageWidth * ratio);
     } else {
         float ratio = printRect.width() / printRect.height();
         pageHeight = view->docHeight();

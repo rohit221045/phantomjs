@@ -25,7 +25,6 @@
 #include "DateConversion.h"
 #include "DateInstance.h"
 #include "DatePrototype.h"
-#include "JSDateMath.h"
 #include "JSFunction.h"
 #include "JSGlobalObject.h"
 #include "JSString.h"
@@ -33,6 +32,7 @@
 #include "ObjectPrototype.h"
 #include <math.h>
 #include <time.h>
+#include <wtf/DateMath.h>
 #include <wtf/MathExtras.h>
 
 #if OS(WINCE) && !PLATFORM(QT)

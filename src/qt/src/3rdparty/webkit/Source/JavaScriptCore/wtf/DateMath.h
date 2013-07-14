@@ -52,8 +52,6 @@
 #include <wtf/OwnArrayPtr.h>
 #include <wtf/PassOwnArrayPtr.h>
 #include <wtf/UnusedParam.h>
-#include <wtf/text/WTFString.h>
-#include <wtf/text/StringConcatenate.h>
 
 namespace WTF {
 void initializeDates();
@@ -61,8 +59,7 @@ int equivalentYearForDST(int year);
 
 // Not really math related, but this is currently the only shared place to put these.
 double parseES5DateFromNullTerminatedCharacters(const char* dateString);
-WTF_EXPORT_PRIVATE double parseDateFromNullTerminatedCharacters(const char* dateString);
-double parseDateFromNullTerminatedCharacters(const char* dateString, bool& haveTZ, int& offset);
+double parseDateFromNullTerminatedCharacters(const char* dateString);
 double timeClip(double);
 
 inline double jsCurrentTime()
@@ -120,6 +117,7 @@ struct GregorianDateTime;
 void msToGregorianDateTime(ExecState*, double, bool outputIsUTC, GregorianDateTime&);
 double gregorianDateTimeToMS(ExecState*, const GregorianDateTime&, double, bool inputIsUTC);
 double getUTCOffset(ExecState*);
+double parseDateFromNullTerminatedCharacters(ExecState*, const char* dateString);
 
 // Intentionally overridding the default tm of the system.
 // The members of tm differ on various operating systems.

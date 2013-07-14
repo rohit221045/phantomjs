@@ -956,8 +956,7 @@ void RenderBlock::layoutRunsAndFloats(bool fullLayout, bool hasInlineChild, Vect
                     repaintLogicalBottom = max(repaintLogicalBottom, lineBox->logicalBottomVisualOverflow());
                 }
 
-                // table cell pagination is handled in RenderTableSection
-                if (paginated && !isTableCell()) {
+                if (paginated) {
                     int adjustment = 0;
                     adjustLinePositionForPagination(lineBox, adjustment);
                     if (adjustment) {

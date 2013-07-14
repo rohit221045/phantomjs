@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2012 Digia Plc and/or its subsidiary(-ies).
+** Copyright (C) 2013 Digia Plc and/or its subsidiary(-ies).
 ** Contact: http://www.qt-project.org/legal
 **
 ** This file is part of the QtCore module of the Qt Toolkit.
@@ -70,7 +70,7 @@
 #  endif
 #endif
 
-#if defined(Q_OS_VXWORKS)
+#if defined(Q_OS_VXWORKS) && defined(_WRS_KERNEL)
 #  include <envLib.h>
 #endif
 
@@ -1135,7 +1135,6 @@ bool qSharedBuild()
     \value WV_2003  Windows Server 2003, Windows Server 2003 R2, Windows Home Server, Windows XP Professional x64 Edition (operating system version 5.2)
     \value WV_VISTA Windows Vista, Windows Server 2008 (operating system version 6.0)
     \value WV_WINDOWS7 Windows 7, Windows Server 2008 R2 (operating system version 6.1)
-    \value WV_WINDOWS8 Windows 8
 
     Alternatively, you may use the following macros which correspond directly to the Windows operating system version number:
 
@@ -1145,7 +1144,6 @@ bool qSharedBuild()
     \value WV_5_2   Operating system version 5.2, corresponds to Windows Server 2003, Windows Server 2003 R2, Windows Home Server, and Windows XP Professional x64 Edition
     \value WV_6_0   Operating system version 6.0, corresponds to Windows Vista and Windows Server 2008
     \value WV_6_1   Operating system version 6.1, corresponds to Windows 7 and Windows Server 2008 R2
-    \value WV_6_2   Operating system version 6.1, corresponds to Windows 8
 
     CE-based versions:
 

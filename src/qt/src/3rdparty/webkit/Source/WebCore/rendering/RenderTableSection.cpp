@@ -414,7 +414,7 @@ void RenderTableSection::layout()
     setNeedsLayout(false);
 }
 
-int RenderTableSection::layoutRows(int toAdd, int headHeight, int footHeight)
+int RenderTableSection::layoutRows(int toAdd)
 {
 #ifndef NDEBUG
     setNeedsLayoutIsForbidden(true);
@@ -496,40 +496,12 @@ int RenderTableSection::layoutRows(int toAdd, int headHeight, int footHeight)
 
     LayoutStateMaintainer statePusher(view(), this, IntSize(x(), y()), style()->isFlippedBlocksWritingMode());
 
-    WTF::Vector<int> logicalHeightsForPrinting;
-    // make sure that rows do not overlap a page break
-    if (view()->layoutState()->pageLogicalHeight()) {
-        logicalHeightsForPrinting.resize(totalRows);
-        int pageOffset = 0;
-        for(int r = 0; r < totalRows; ++r) {
-            const int childLogicalHeight = m_rowPos[r + 1] - m_rowPos[r] - (m_grid[r].rowRenderer ? vspacing : 0);
-            logicalHeightsForPrinting[r] = childLogicalHeight;
-            LayoutState* layoutState = view()->layoutState();
-            const int pageLogicalHeight = layoutState->m_pageLogicalHeight;
-            if (childLogicalHeight < pageLogicalHeight - footHeight) {
-                const IntSize delta = layoutState->m_layoutOffset - layoutState->m_pageOffset;
-                const int logicalOffset = m_rowPos[r] + pageOffset;
-                const int offset = isHorizontalWritingMode() ? delta.height() : delta.width();
-                const int remainingLogicalHeight = (pageLogicalHeight - (offset + logicalOffset) % pageLogicalHeight) % pageLogicalHeight;
-                if (remainingLogicalHeight - footHeight < childLogicalHeight) {
-                    pageOffset += remainingLogicalHeight + headHeight;
-                }
-            }
-            m_rowPos[r] += pageOffset;
-        }
-        m_rowPos[totalRows] += pageOffset;
-    }
-
     for (int r = 0; r < totalRows; r++) {
         // Set the row's x/y position and width/height.
         if (RenderTableRow* rowRenderer = m_grid[r].rowRenderer) {
             rowRenderer->setLocation(0, m_rowPos[r]);
             rowRenderer->setLogicalWidth(logicalWidth());
-            if (view()->layoutState()->pageLogicalHeight()) {
-                rowRenderer->setLogicalHeight(logicalHeightsForPrinting[r]);
-            } else {
-                rowRenderer->setLogicalHeight(m_rowPos[r + 1] - m_rowPos[r] - vspacing);
-            }
+            rowRenderer->setLogicalHeight(m_rowPos[r + 1] - m_rowPos[r] - vspacing);
             rowRenderer->updateLayerTransform();
         }
 
@@ -541,11 +513,7 @@ int RenderTableSection::layoutRows(int toAdd, int headHeight, int footHeight)
                 continue;
 
             rindx = cell->row();
-            if (view()->layoutState()->pageLogicalHeight() && cell->rowSpan() == 1) {
-                rHeight = logicalHeightsForPrinting[rindx];
-            } else {
-                rHeight = m_rowPos[rindx + cell->rowSpan()] - m_rowPos[rindx] - vspacing;
-            }
+            rHeight = m_rowPos[rindx + cell->rowSpan()] - m_rowPos[rindx] - vspacing;
             
             // Force percent height children to lay themselves out again.
             // This will cause these children to grow to fill the cell.

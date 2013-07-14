@@ -24,7 +24,6 @@
 
 #include "FontPlatformData.h"
 #include "SharedBuffer.h"
-#include "WOFFFileFormat.h"
 #include <QFontDatabase>
 #include <QStringList>
 
@@ -32,11 +31,7 @@ namespace WebCore {
 
 FontCustomPlatformData::~FontCustomPlatformData()
 {
-#if !defined(Q_OS_MAC)
-    // On Mac OS X, do not remove the font because it may crash.
-    // For details, see issue 690 (http://code.google.com/p/phantomjs/issues/detail?id=690).
     QFontDatabase::removeApplicationFont(m_handle);
-#endif
 }
 
 FontPlatformData FontCustomPlatformData::fontPlatformData(int size, bool bold, bool italic, FontOrientation, TextOrientation, FontWidthVariant, FontRenderingMode)
@@ -55,15 +50,6 @@ FontCustomPlatformData* createFontCustomPlatformData(SharedBuffer* buffer)
 {
     ASSERT_ARG(buffer, buffer);
 
-    RefPtr<SharedBuffer> sfntBuffer;
-    if (isWOFF(buffer)) {
-        Vector<char> sfnt;
-        if (!convertWOFFToSfnt(buffer, sfnt))
-            return 0;
-        sfntBuffer = SharedBuffer::adoptVector(sfnt);
-        buffer = sfntBuffer.get();
-    }
-
     int id = QFontDatabase::addApplicationFontFromData(QByteArray(buffer->data(), buffer->size()));
     if (id == -1)
         return 0;
@@ -77,7 +63,7 @@ FontCustomPlatformData* createFontCustomPlatformData(SharedBuffer* buffer)
 
 bool FontCustomPlatformData::supportsFormat(const String& format)
 {
-    return equalIgnoringCase(format, "truetype") || equalIgnoringCase(format, "opentype") || equalIgnoringCase(format, "woff");
+    return equalIgnoringCase(format, "truetype") || equalIgnoringCase(format, "opentype");
 }
 
 }

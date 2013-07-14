@@ -161,7 +161,7 @@ void QWebInspector::showEvent(QShowEvent* event)
 #if ENABLE(INSPECTOR)
     // Allows QWebInspector::show() to init the inspector.
     if (d->page)
-        d->page->d->inspectorController()->showAndEnableDebugger();
+        d->page->d->inspectorController()->show();
 #endif
 }
 

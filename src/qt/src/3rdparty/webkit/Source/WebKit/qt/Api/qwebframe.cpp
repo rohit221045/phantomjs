@@ -110,8 +110,6 @@
 #include <qregion.h>
 #include <qnetworkrequest.h>
 
-#include "qwebframe_printingaddons_p.h"
-
 using namespace WebCore;
 
 // from text/qfont.cpp
@@ -1433,17 +1431,9 @@ bool QWebFrame::event(QEvent *e)
 
     \sa render()
 */
-void QWebFrame::print(QPrinter* printer) const
-{
-    print(printer, 0);
-}
-
-void QWebFrame::print(QPrinter *printer, PrintCallback *callback) const
+void QWebFrame::print(QPrinter *printer) const
 {
     QPainter painter;
-
-    HeaderFooter headerFooter(this, printer, callback);
-
     if (!painter.begin(printer))
         return;
 
@@ -1459,7 +1449,7 @@ void QWebFrame::print(QPrinter *printer, PrintCallback *callback) const
                      int(qprinterRect.width() / zoomFactorX),
                      int(qprinterRect.height() / zoomFactorY));
 
-    printContext.begin(pageRect.width(), pageRect.height());
+    printContext.begin(pageRect.width());
 
     printContext.computePageRects(pageRect, /* headerHeight */ 0, /* footerHeight */ 0, /* userScaleFactor */ 1.0, pageHeight);
 
@@ -1509,13 +1499,6 @@ void QWebFrame::print(QPrinter *printer, PrintCallback *callback) const
                     printContext.end();
                     return;
                 }
-                if (headerFooter.isValid()) {
-                    // print header/footer
-                    int logicalPage, logicalPages;
-                    d->frame->getPagination(page, printContext.pageCount(), logicalPage, logicalPages);
-                    headerFooter.paintHeader(ctx, pageRect, logicalPage, logicalPages);
-                    headerFooter.paintFooter(ctx, pageRect, logicalPage, logicalPages);
-                }
                 printContext.spoolPage(ctx, page - 1, pageRect.width());
                 if (j < pageCopies - 1)
                     printer->newPage();
@@ -1546,14 +1529,14 @@ void QWebFrame::print(QPrinter *printer, PrintCallback *callback) const
 
     \sa addToJavaScriptWindowObject(), javaScriptWindowObjectCleared()
 */
-QVariant QWebFrame::evaluateJavaScript(const QString& scriptSource, const QString& location)
+QVariant QWebFrame::evaluateJavaScript(const QString& scriptSource)
 {
     ScriptController *proxy = d->frame->script();
     QVariant rc;
     if (proxy) {
 #if USE(JSC)
         int distance = 0;
-        JSC::JSValue v = d->frame->script()->executeScript(ScriptSourceCode(scriptSource, WTF::String(location))).jsValue();
+        JSC::JSValue v = d->frame->script()->executeScript(ScriptSourceCode(scriptSource)).jsValue();
 
         rc = JSC::Bindings::convertValueToQVariant(proxy->globalObject(mainThreadNormalWorld())->globalExec(), v, QMetaType::Void, &distance);
 #elif USE(V8)

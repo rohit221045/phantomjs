@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2012 Digia Plc and/or its subsidiary(-ies).
+** Copyright (C) 2013 Digia Plc and/or its subsidiary(-ies).
 ** Contact: http://www.qt-project.org/legal
 **
 ** This file is part of the QtGui module of the Qt Toolkit.
@@ -47,7 +47,6 @@
 #include "qpixmapcache.h"
 #include "qstyleoption.h"
 #include "private/qstyle_p.h"
-#include "private/qapplication_p.h"
 #ifndef QT_NO_DEBUG
 #include "qdebug.h"
 #endif
@@ -2230,7 +2229,7 @@ QPalette QStyle::standardPalette() const
 {
 #ifdef Q_WS_X11
     QColor background;
-    if (!qt_is_gui_used || QX11Info::appDepth() > 8)
+    if (QX11Info::appDepth() > 8)
         background = QColor(0xd4, 0xd0, 0xc8); // win 2000 grey
     else
         background = QColor(192, 192, 192);

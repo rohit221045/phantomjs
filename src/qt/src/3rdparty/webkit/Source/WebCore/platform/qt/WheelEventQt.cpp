@@ -24,9 +24,7 @@
 #include "PlatformWheelEvent.h"
 #include "Scrollbar.h"
 
-#ifndef QT_NO_GRAPHICSVIEW
 #include <QGraphicsSceneWheelEvent>
-#endif
 #include <QWheelEvent>
 #include <qapplication.h>
 
@@ -59,7 +57,6 @@ void PlatformWheelEvent::applyDelta(int delta, Qt::Orientation orientation)
 #endif
 }
 
-#ifndef QT_NO_GRAPHICSVIEW
 PlatformWheelEvent::PlatformWheelEvent(QGraphicsSceneWheelEvent* e)
 #ifndef QT_NO_WHEELEVENT
     : m_position(e->pos().toPoint())
@@ -78,7 +75,6 @@ PlatformWheelEvent::PlatformWheelEvent(QGraphicsSceneWheelEvent* e)
     Q_UNUSED(e);
 #endif
 }
-#endif
 
 PlatformWheelEvent::PlatformWheelEvent(QWheelEvent* e)
 #ifndef QT_NO_WHEELEVENT

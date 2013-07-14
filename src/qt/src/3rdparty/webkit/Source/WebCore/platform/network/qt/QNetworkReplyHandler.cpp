@@ -45,7 +45,7 @@
 // for now, use this hackish solution for setting the internal attribute.
 const QNetworkRequest::Attribute gSynchronousNetworkRequestAttribute = static_cast<QNetworkRequest::Attribute>(QNetworkRequest::HttpPipeliningWasUsedAttribute + 7);
 
-static const int gMaxRedirections = 20;
+static const int gMaxRedirections = 10;
 
 namespace WebCore {
 
@@ -178,13 +178,10 @@ void QNetworkReplyHandlerCallQueue::unlock()
     flush();
 }
 
-void QNetworkReplyHandlerCallQueue::setDeferSignals(bool defer, bool sync)
+void QNetworkReplyHandlerCallQueue::setDeferSignals(bool defer)
 {
     m_deferSignals = defer;
-    if (sync)
-        flush();
-    else
-        QMetaObject::invokeMethod(this, "flush",  Qt::QueuedConnection);
+    flush();
 }
 
 void QNetworkReplyHandlerCallQueue::flush()
@@ -221,7 +218,6 @@ QNetworkReplyWrapper::QNetworkReplyWrapper(QNetworkReplyHandlerCallQueue* queue,
     connect(m_reply, SIGNAL(finished()), this, SLOT(setFinished()));
     connect(m_reply, SIGNAL(finished()), this, SLOT(receiveMetaData()));
     connect(m_reply, SIGNAL(readyRead()), this, SLOT(receiveMetaData()));
-    connect(m_reply, SIGNAL(destroyed()), this, SLOT(replyDestroyed()));
 }
 
 QNetworkReplyWrapper::~QNetworkReplyWrapper()
@@ -236,11 +232,12 @@ QNetworkReply* QNetworkReplyWrapper::release()
     if (!m_reply)
         return 0;
 
-    m_reply->disconnect(this);
+    resetConnections();
     QNetworkReply* reply = m_reply;
     m_reply = 0;
     m_sniffer = 0;
 
+    reply->setParent(0);
     return reply;
 }
 
@@ -250,10 +247,10 @@ void QNetworkReplyWrapper::synchronousLoad()
     receiveMetaData();
 }
 
-void QNetworkReplyWrapper::stopForwarding()
+void QNetworkReplyWrapper::resetConnections()
 {
     if (m_reply) {
-        // Disconnect all connections that might affect the ResourceHandleClient.
+        // Disconnect all connections except the one to setFinished() slot.
         m_reply->disconnect(this, SLOT(receiveMetaData()));
         m_reply->disconnect(this, SLOT(didReceiveFinished()));
         m_reply->disconnect(this, SLOT(didReceiveReadyRead()));
@@ -264,7 +261,8 @@ void QNetworkReplyWrapper::stopForwarding()
 void QNetworkReplyWrapper::receiveMetaData()
 {
     // This slot is only used to receive the first signal from the QNetworkReply object.
-    stopForwarding();
+    resetConnections();
+
 
     WTF::String contentType = m_reply->header(QNetworkRequest::ContentTypeHeader).toString();
     m_encoding = extractCharsetFromMediaType(contentType);
@@ -317,12 +315,6 @@ void QNetworkReplyWrapper::setFinished()
     m_reply->setProperty("_q_isFinished", true);
 }
 
-void QNetworkReplyWrapper::replyDestroyed()
-{
-    m_reply = 0;
-    m_sniffer = 0;
-}
-
 void QNetworkReplyWrapper::emitMetaDataChanged()
 {
     QueueLocker lock(m_queue);
@@ -353,7 +345,7 @@ void QNetworkReplyWrapper::didReceiveReadyRead()
 void QNetworkReplyWrapper::didReceiveFinished()
 {
     // Disconnecting will make sure that nothing will happen after emitting the finished signal.
-    stopForwarding();
+    resetConnections();
     m_queue->push(&QNetworkReplyHandler::finish);
 }
 

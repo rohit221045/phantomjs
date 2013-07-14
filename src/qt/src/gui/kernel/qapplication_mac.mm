@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2012 Digia Plc and/or its subsidiary(-ies).
+** Copyright (C) 2013 Digia Plc and/or its subsidiary(-ies).
 ** Contact: http://www.qt-project.org/legal
 **
 ** This file is part of the QtGui module of the Qt Toolkit.
@@ -1207,9 +1207,10 @@ void qt_init(QApplicationPrivate *priv, int)
 #ifndef QT_NO_ACCESSIBILITY
         QAccessible::initialize();
 #endif
+#ifndef QT_NO_IM
         QMacInputContext::initialize();
         QApplicationPrivate::inputContext = new QMacInputContext;
-
+#endif
         if (QApplication::desktopSettingsAware())
             qt_mac_update_os_settings();
 #ifndef QT_MAC_USE_COCOA
@@ -1256,14 +1257,11 @@ void qt_init(QApplicationPrivate *priv, int)
         [newDelegate setReflectionDelegate:oldDelegate];
         [cocoaApp setDelegate:newDelegate];
 
-// https://bugreports.qt.nokia.com/browse/QTBUG-5952
         QT_MANGLE_NAMESPACE(QCocoaMenuLoader) *qtMenuLoader = [[QT_MANGLE_NAMESPACE(QCocoaMenuLoader) alloc] init];
         if ([NSBundle loadNibNamed:@"qt_menu" owner:qtMenuLoader] == false) {
-#if 0
             qFatal("Qt internal error: qt_menu.nib could not be loaded. The .nib file"
                    " should be placed in QtGui.framework/Versions/Current/Resources/ "
                    " or in the resources directory of your application bundle.");
-#endif
         }
 
         [cocoaApp setMenu:[qtMenuLoader menu]];
@@ -1328,7 +1326,9 @@ void qt_cleanup()
 #ifndef QT_NO_ACCESSIBILITY
         QAccessible::cleanup();
 #endif
+#ifndef QT_NO_IM
         QMacInputContext::cleanup();
+#endif
         QCursorData::cleanup();
         QFont::cleanup();
         QColormap::cleanup();

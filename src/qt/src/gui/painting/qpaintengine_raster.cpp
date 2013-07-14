@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2012 Digia Plc and/or its subsidiary(-ies).
+** Copyright (C) 2013 Digia Plc and/or its subsidiary(-ies).
 ** Contact: http://www.qt-project.org/legal
 **
 ** This file is part of the QtGui module of the Qt Toolkit.
@@ -1056,20 +1056,20 @@ void QRasterPaintEnginePrivate::drawImage(const QPointF &pt,
 
 void QRasterPaintEnginePrivate::systemStateChanged()
 {
-    QRect clipRect(0, 0,
+    deviceRectUnclipped = QRect(0, 0,
             qMin(QT_RASTER_COORD_LIMIT, device->width()),
             qMin(QT_RASTER_COORD_LIMIT, device->height()));
 
     if (!systemClip.isEmpty()) {
-        QRegion clippedDeviceRgn = systemClip & clipRect;
+        QRegion clippedDeviceRgn = systemClip & deviceRectUnclipped;
         deviceRect = clippedDeviceRgn.boundingRect();
         baseClip->setClipRegion(clippedDeviceRgn);
     } else {
-        deviceRect = clipRect;
+        deviceRect = deviceRectUnclipped;
         baseClip->setClipRect(deviceRect);
     }
 #ifdef QT_DEBUG_DRAW
-    qDebug() << "systemStateChanged" << this << "deviceRect" << deviceRect << clipRect << systemClip;
+    qDebug() << "systemStateChanged" << this << "deviceRect" << deviceRect << deviceRectUnclipped << systemClip;
 #endif
 
     exDeviceRect = deviceRect;
@@ -1536,7 +1536,7 @@ void QRasterPaintEngine::drawRects(const QRect *rects, int rectCount)
     if (s->penData.blend) {
         QRectVectorPath path;
         if (s->flags.fast_pen) {
-            QCosmeticStroker stroker(s, d->deviceRect);
+            QCosmeticStroker stroker(s, d->deviceRect, d->deviceRectUnclipped);
             for (int i = 0; i < rectCount; ++i) {
                 path.set(rects[i]);
                 stroker.drawPath(path);
@@ -1582,7 +1582,7 @@ void QRasterPaintEngine::drawRects(const QRectF *rects, int rectCount)
         if (s->penData.blend) {
             QRectVectorPath path;
             if (s->flags.fast_pen) {
-                QCosmeticStroker stroker(s, d->deviceRect);
+                QCosmeticStroker stroker(s, d->deviceRect, d->deviceRectUnclipped);
                 for (int i = 0; i < rectCount; ++i) {
                     path.set(rects[i]);
                     stroker.drawPath(path);
@@ -1615,7 +1615,7 @@ void QRasterPaintEngine::stroke(const QVectorPath &path, const QPen &pen)
         return;
 
     if (s->flags.fast_pen) {
-        QCosmeticStroker stroker(s, d->deviceRect);
+        QCosmeticStroker stroker(s, d->deviceRect, d->deviceRectUnclipped);
         stroker.drawPath(path);
     } else if (s->flags.non_complex_pen && path.shape() == QVectorPath::LinesHint) {
         qreal width = s->lastPen.isCosmetic()
@@ -1953,7 +1953,7 @@ void QRasterPaintEngine::drawPolygon(const QPointF *points, int pointCount, Poly
     if (s->penData.blend) {
         QVectorPath vp((qreal *) points, pointCount, 0, QVectorPath::polygonFlags(mode));
         if (s->flags.fast_pen) {
-            QCosmeticStroker stroker(s, d->deviceRect);
+            QCosmeticStroker stroker(s, d->deviceRect, d->deviceRectUnclipped);
             stroker.drawPath(vp);
         } else {
             QPaintEngineEx::stroke(vp, s->lastPen);
@@ -2024,7 +2024,7 @@ void QRasterPaintEngine::drawPolygon(const QPoint *points, int pointCount, Polyg
         QVectorPath vp((qreal *) fpoints.data(), pointCount, 0, QVectorPath::polygonFlags(mode));
 
         if (s->flags.fast_pen) {
-            QCosmeticStroker stroker(s, d->deviceRect);
+            QCosmeticStroker stroker(s, d->deviceRect, d->deviceRectUnclipped);
             stroker.drawPath(vp);
         } else {
             QPaintEngineEx::stroke(vp, s->lastPen);
@@ -2243,11 +2243,11 @@ namespace {
 /*!
     \reimp
 */
-void QRasterPaintEngine::drawImage(const QRectF &r, const QImage &_img, const QRectF &_sr,
+void QRasterPaintEngine::drawImage(const QRectF &r, const QImage &img, const QRectF &sr,
                                    Qt::ImageConversionFlags)
 {
 #ifdef QT_DEBUG_DRAW
-    qDebug() << " - QRasterPaintEngine::drawImage(), r=" << r << " sr=" << _sr << " image=" << _img.size() << "depth=" << img.depth();
+    qDebug() << " - QRasterPaintEngine::drawImage(), r=" << r << " sr=" << sr << " image=" << img.size() << "depth=" << img.depth();
 #endif
 
     if (r.isEmpty())
@@ -2255,17 +2255,6 @@ void QRasterPaintEngine::drawImage(const QRectF &r, const QImage &_img, const QR
 
     Q_D(QRasterPaintEngine);
     QRasterPaintEngineState *s = state();
-    
-    QImage img;
-    QRectF sr=_sr;
-    if (s->matrix.isAffine()) {
-        img = _img.copy(sr.toRect()).scaled(
-            s->matrix.mapRect(r).size().toSize(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
-        sr = img.rect();
-    } else {
-        img=_img;
-    }
- 
     int sr_l = qFloor(sr.left());
     int sr_r = qCeil(sr.right()) - 1;
     int sr_t = qFloor(sr.top());
@@ -3227,7 +3216,7 @@ void QRasterPaintEngine::drawPoints(const QPointF *points, int pointCount)
         return;
     }
 
-    QCosmeticStroker stroker(s, d->deviceRect);
+    QCosmeticStroker stroker(s, d->deviceRect, d->deviceRectUnclipped);
     stroker.drawPoints(points, pointCount);
 }
 
@@ -3246,7 +3235,7 @@ void QRasterPaintEngine::drawPoints(const QPoint *points, int pointCount)
         return;
     }
 
-    QCosmeticStroker stroker(s, d->deviceRect);
+    QCosmeticStroker stroker(s, d->deviceRect, d->deviceRectUnclipped);
     stroker.drawPoints(points, pointCount);
 }
 
@@ -3266,7 +3255,7 @@ void QRasterPaintEngine::drawLines(const QLine *lines, int lineCount)
         return;
 
     if (s->flags.fast_pen) {
-        QCosmeticStroker stroker(s, d->deviceRect);
+        QCosmeticStroker stroker(s, d->deviceRect, d->deviceRectUnclipped);
         for (int i=0; i<lineCount; ++i) {
             const QLine &l = lines[i];
             stroker.drawLine(l.p1(), l.p2());
@@ -3337,7 +3326,7 @@ void QRasterPaintEngine::drawLines(const QLineF *lines, int lineCount)
     if (!s->penData.blend)
         return;
     if (s->flags.fast_pen) {
-        QCosmeticStroker stroker(s, d->deviceRect);
+        QCosmeticStroker stroker(s, d->deviceRect, d->deviceRectUnclipped);
         for (int i=0; i<lineCount; ++i) {
             QLineF line = lines[i];
             stroker.drawLine(line.p1(), line.p2());

@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2012 Digia Plc and/or its subsidiary(-ies).
+** Copyright (C) 2013 Digia Plc and/or its subsidiary(-ies).
 ** Contact: http://www.qt-project.org/legal
 **
 ** This file is part of the QtGui module of the Qt Toolkit.
@@ -70,8 +70,6 @@
 
 #include "qdesktopwidget_qpa_p.h"
 
-#include "qminimalintegration.h"
-
 QT_BEGIN_NAMESPACE
 
 static QString appName;
@@ -120,6 +118,9 @@ void QApplicationPrivate::processWindowSystemEvent(QWindowSystemInterfacePrivate
     case QWindowSystemInterfacePrivate::ActivatedWindow:
         QApplicationPrivate::processActivatedEvent(static_cast<QWindowSystemInterfacePrivate::ActivatedWindowEvent *>(e));
         break;
+    case QWindowSystemInterfacePrivate::WindowStateChanged:
+        QApplicationPrivate::processWindowStateChangedEvent(static_cast<QWindowSystemInterfacePrivate::WindowStateChangedEvent *>(e));
+        break;
     case QWindowSystemInterfacePrivate::Close:
         QApplicationPrivate::processCloseEvent(
                 static_cast<QWindowSystemInterfacePrivate::CloseEvent *>(e));
@@ -147,6 +148,20 @@ void QApplicationPrivate::processWindowSystemEvent(QWindowSystemInterfacePrivate
         qWarning() << "Unknown user input event type:" << e->type;
         break;
     }
+}
+
+void QApplicationPrivate::processWindowStateChangedEvent(QWindowSystemInterfacePrivate::WindowStateChangedEvent *wse)
+{
+    if (wse->tlw.isNull())
+       return;
+
+    QWidget *tlw = wse->tlw.data();
+    if (!tlw->isWindow())
+        return;
+
+    QWindowStateChangeEvent e(tlw->windowState());
+    tlw->setWindowState(wse->newState);
+    QApplication::sendSpontaneousEvent(tlw, &e);
 }
 
 QString QApplicationPrivate::appName() const
@@ -468,12 +483,23 @@ void QApplication::alert(QWidget *, int)
 QPlatformNativeInterface *QApplication::platformNativeInterface()
 {
     QPlatformIntegration *pi = QApplicationPrivate::platformIntegration();
-    return pi->nativeInterface();
+    return pi ? pi->nativeInterface() : 0;
 }
 
 static void init_platform(const QString &name, const QString &platformPluginPath)
 {
-    QApplicationPrivate::platform_integration = new QMinimalIntegration;
+    QApplicationPrivate::platform_integration = QPlatformIntegrationFactory::create(name, platformPluginPath);
+    if (!QApplicationPrivate::platform_integration) {
+        QStringList keys = QPlatformIntegrationFactory::keys(platformPluginPath);
+        QString fatalMessage =
+            QString::fromLatin1("Failed to load platform plugin \"%1\". Available platforms are: \n").arg(name);
+        foreach(QString key, keys) {
+            fatalMessage.append(key + QString::fromLatin1("\n"));
+        }
+        qFatal("%s", fatalMessage.toLocal8Bit().constData());
+
+    }
+
 }
 
 

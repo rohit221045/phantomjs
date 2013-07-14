@@ -49,7 +49,7 @@ public:
 
     void setCellLogicalWidths();
     int calcRowLogicalHeight();
-    int layoutRows(int logicalHeight, int headHeight, int footHeight);
+    int layoutRows(int logicalHeight);
 
     RenderTable* table() const { return toRenderTable(parent()); }
 

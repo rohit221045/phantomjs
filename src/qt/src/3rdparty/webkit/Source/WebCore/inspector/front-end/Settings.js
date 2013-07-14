@@ -40,7 +40,7 @@ var Preferences = {
     showMissingLocalizedStrings: false,
     samplingCPUProfiler: false,
     showColorNicknames: true,
-    debuggerAlwaysEnabled: true,
+    debuggerAlwaysEnabled: false,
     profilerAlwaysEnabled: false,
     onlineDetectionEnabled: true,
     nativeInstrumentationEnabled: false,
@@ -58,7 +58,7 @@ WebInspector.Settings = function()
 {
     this.installApplicationSetting("colorFormat", "hex");
     this.installApplicationSetting("consoleHistory", []);
-    this.installApplicationSetting("debuggerEnabled", true);
+    this.installApplicationSetting("debuggerEnabled", false);
     this.installApplicationSetting("domWordWrap", true);
     this.installApplicationSetting("profilerEnabled", false);
     this.installApplicationSetting("eventListenersFilter", "all");
